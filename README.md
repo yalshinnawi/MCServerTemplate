@@ -17,7 +17,7 @@ start.bat
 ### On Linux / macOS / WSL:
 Make executable and run:
 ```bash
-chmod +x start.sh run.sh
+chmod +x start.sh
 ./start.sh
 ```
 
@@ -38,7 +38,6 @@ chmod +x start.sh run.sh
 | `start.bat -tunnel` | `./start.sh -tunnel` | Starts server **AND** launches the Playit.gg WAN tunnel for friends to join. |
 | `start.bat backup` | `./start.sh backup` | Safely creates a timestamped archive of the `world/` folder into `./backups/`. |
 | `start.bat help` | `./start.sh help` | Displays the help menu with configuration tips. |
-| `run.bat` | `./run.sh` | Direct raw NeoForge runner (no pre-checks). |
 
 ---
 
