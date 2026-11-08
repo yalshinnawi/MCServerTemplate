@@ -1,0 +1,10 @@
+{
+  "copperDamage": "5-10",
+  "copperSpeed": 1.2,
+  "goldenDamage": "4-9",
+  "goldenSpeed": 0.6,
+  "diamondDamage": "10-15",
+  "diamondSpeed": 0.5,
+  "netheriteDamage": "12-17",
+  "netheriteSpeed": 0.4
+}

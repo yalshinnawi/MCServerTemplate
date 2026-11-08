@@ -1,0 +1,7 @@
+#The default difficulty selected for newly created worlds.
+#Allowed Values: PEACEFUL, EASY, NORMAL, HARD
+defaultDifficulty = "NORMAL"
+#Set to true if the difficulty for new world's should be locked to the specific default. This cannot be unlocked by players without external tools! Probably a bad idea. I don't recommend. Why am I adding this option?
+lockDifficulty = false
+#Resource pack IDs to have enabled by default on the first run.
+defaultResourcePacks = ["mod/punchy:resourcepacks/punchy", "vanilla", "generated/fragmentum_layer", "mod_resources", "moonlight:merged_pack", "mod/eternal_starlight:resourcepacks/starlight_3d_mace", "eatinganimations_compat", "aeronauticshotairfix:hot_air_fix", "file/loadingbackgrounds_create_aronautics_skybound_1.21.X-3.0.0.zip"]

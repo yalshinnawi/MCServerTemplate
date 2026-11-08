@@ -1,0 +1,47 @@
+# Java Runtime (Local OpenJDK installation; contains files > 100MB blocked by GitHub)
+java-runtime/
+
+# Minecraft World & Saves (Omit local world saves for a clean server template)
+world/
+
+# Runtime Logs & Crash Reports
+logs/
+crash-reports/
+debug/
+*.log
+*.log.gz
+
+# Mixin & Mod runtime caches
+.mixin.out/
+.sable/
+.previousrun
+dynamic-data-pack-cache/
+automessage_data/
+local/
+journeymap/
+*.tmp
+
+# Server player cache & permissions (Auto-generated at runtime)
+usercache.json
+usernamecache.json
+banned-ips.json
+banned-players.json
+ops.json
+whitelist.json
+session.lock
+
+# Playit.gg secrets & tokens
+playit.toml
+*.token
+
+# Old backups & installer logs
+*.OLD
+*installer.jar.log
+
+# IDE & System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+

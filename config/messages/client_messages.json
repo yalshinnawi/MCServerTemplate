@@ -1,0 +1,14 @@
+[
+  {
+    "identifier": "modpack_introduction",
+    "schedule": "on_first_join",
+    "type": "chat",
+    "repeats": false,
+    "pack_intro": true,
+    "link": "https://www.bisecthosting.com/lupin",
+    "text": "§2Thanks for downloading Create Aeronautics - Skybound!§f
+§aShaders are enabled by default. Press §eK §ato disable them if you experience performance issues.§f
+§6Play with friends! Click here to get your multiplayer server.§f
+§cThis message won't appear again.§f"
+  }
+]

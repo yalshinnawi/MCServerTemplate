@@ -1,0 +1,3 @@
+["General Settings"]
+	#If true, submarines will not implode even if they reach critical depth.
+	disableImplosion = false
