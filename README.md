@@ -34,8 +34,8 @@ chmod +x start.sh
 
 | Command (Windows) | Command (Linux / macOS) | Description |
 | :--- | :--- | :--- |
-| `start.bat` | `./start.sh` | Normal start: verifies Java, boots server directly. |
-| `start.bat -tunnel` | `./start.sh -tunnel` | Starts server **AND** launches the Playit.gg WAN tunnel for friends to join. |
+| `start.bat` | `./start.sh` | **Default**: Starts server + Playit.gg WAN tunnel for friends. |
+| `start.bat -local` | `./start.sh -local` | Starts server in local-only LAN mode (without Playit tunnel). |
 | `start.bat backup` | `./start.sh backup` | Safely creates a timestamped archive of the `world/` folder into `./backups/`. |
 | `start.bat help` | `./start.sh help` | Displays the help menu with configuration tips. |
 
@@ -44,11 +44,11 @@ chmod +x start.sh
 ## 🌐 Connecting Friends & Network Setup
 
 ### 1. External Friends (Across the Internet)
-Start the server with the tunnel flag:
+Just start the server:
 ```cmd
-start.bat -tunnel
+start.bat
 ```
-Friends connect using your Playit domain and port:
+The Playit tunnel launches automatically in the background. Friends connect using your domain and port:
 ```text
 chords-infected.tun.ply.gg:1779
 ```

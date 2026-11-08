@@ -8,7 +8,7 @@ REM Create Aeronautics Server - Unified Native Launcher (Windows)
 REM ==============================================================================
 
 set "ACTION=%~1"
-set "OPT_TUNNEL=0"
+set "OPT_TUNNEL=1"
 
 REM Command line parsing
 if "%ACTION%"=="" goto START_SERVER
@@ -16,16 +16,13 @@ if /i "%ACTION%"=="help" goto PRINT_HELP
 if /i "%ACTION%"=="-h" goto PRINT_HELP
 if /i "%ACTION%"=="--help" goto PRINT_HELP
 if /i "%ACTION%"=="backup" goto CMD_BACKUP
-if /i "%ACTION%"=="-tunnel" (
-    set "OPT_TUNNEL=1"
-    goto START_SERVER
-)
-if /i "%ACTION%"=="--tunnel" (
-    set "OPT_TUNNEL=1"
-    goto START_SERVER
-)
-if /i "%~2"=="-tunnel" set "OPT_TUNNEL=1"
-if /i "%~2"=="--tunnel" set "OPT_TUNNEL=1"
+if /i "%ACTION%"=="-local" set "OPT_TUNNEL=0"
+if /i "%ACTION%"=="--no-tunnel" set "OPT_TUNNEL=0"
+if /i "%ACTION%"=="-notunnel" set "OPT_TUNNEL=0"
+if /i "%~2"=="-local" set "OPT_TUNNEL=0"
+if /i "%~2"=="--no-tunnel" set "OPT_TUNNEL=0"
+if /i "%~2"=="-notunnel" set "OPT_TUNNEL=0"
+goto START_SERVER
 
 :START_SERVER
 echo ==============================================================================
@@ -169,8 +166,8 @@ echo ===========================================================================
 echo Usage: start.bat [command] [options]
 echo.
 echo Commands:
-echo   (no arguments)     Start the Minecraft server directly
-echo   -tunnel            Start the server AND launch Playit.gg tunnel in background
+echo   (no arguments)     Start the Minecraft server + Playit.gg tunnel for friends (Default)
+echo   -local             Start server in local LAN mode (no tunnel)
 echo   backup             Safely compress the world folder into ./backups/
 echo   help               Show this help message
 echo.

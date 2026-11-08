@@ -8,7 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 ACTION="${1:-}"
-OPT_TUNNEL=0
+OPT_TUNNEL=1
+
+if [ "$ACTION" = "-local" ] || [ "$ACTION" = "--no-tunnel" ] || [ "$ACTION" = "-notunnel" ] || [ "${2:-}" = "-local" ] || [ "${2:-}" = "--no-tunnel" ]; then
+    OPT_TUNNEL=0
+fi
 
 if [ "$ACTION" = "help" ] || [ "$ACTION" = "-h" ] || [ "$ACTION" = "--help" ]; then
     echo "=============================================================================="
@@ -17,8 +21,8 @@ if [ "$ACTION" = "help" ] || [ "$ACTION" = "-h" ] || [ "$ACTION" = "--help" ]; t
     echo "Usage: ./start.sh [command] [options]"
     echo ""
     echo "Commands:"
-    echo "  (no arguments)     Start the Minecraft server directly"
-    echo "  -tunnel            Start the server AND launch Playit tunnel in background"
+    echo "  (no arguments)     Start the Minecraft server + Playit tunnel for friends (Default)"
+    echo "  -local             Start server in local LAN mode (no tunnel)"
     echo "  backup             Safely compress the world folder into ./backups/"
     echo "  help               Show this help message"
     echo ""
@@ -43,9 +47,6 @@ if [ "$ACTION" = "backup" ]; then
     exit 0
 fi
 
-if [ "$ACTION" = "-tunnel" ] || [ "$ACTION" = "--tunnel" ] || [ "${2:-}" = "-tunnel" ] || [ "${2:-}" = "--tunnel" ]; then
-    OPT_TUNNEL=1
-fi
 
 echo "=============================================================================="
 echo "      Create Aeronautics Skybound - Native Server Launcher"
