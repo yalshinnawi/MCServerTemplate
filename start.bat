@@ -36,59 +36,61 @@ echo.
 REM 1. Java 21 Detection
 set "JAVA_CMD="
 
-REM Check if system Java is available
+REM Check if system Java is available and >= 21
 where java >nul 2>&1
-if not errorlevel 1 (
-    for /f "tokens=3" %%v in ('java -version 2^>^&1 ^| findstr /i "version"') do (
-        set "RAW_VER=%%~v"
-        set "RAW_VER=!RAW_VER:"=!"
-        for /f "tokens=1 delims=." %%m in ("!RAW_VER!") do set "JAVA_MAJOR=%%m"
-    )
-    if defined JAVA_MAJOR (
-        if !JAVA_MAJOR! GEQ 21 (
-            set "JAVA_CMD=java"
-            echo [OK] Detected System Java !JAVA_MAJOR!
-        )
+if errorlevel 1 goto CHECK_LOCAL_JAVA
+
+for /f "tokens=3" %%v in ('java -version 2^>^&1 ^| findstr /i "version"') do (
+    set "RAW_VER=%%~v"
+    set "RAW_VER=!RAW_VER:"=!"
+    for /f "tokens=1 delims=." %%m in ("!RAW_VER!") do set "JAVA_MAJOR=%%m"
+)
+
+if not defined JAVA_MAJOR goto CHECK_LOCAL_JAVA
+if !JAVA_MAJOR! LSS 21 goto CHECK_LOCAL_JAVA
+
+set "JAVA_CMD=java"
+echo [OK] Detected System Java !JAVA_MAJOR!
+goto JAVA_FOUND
+
+:CHECK_LOCAL_JAVA
+for /f "delims=" %%j in ('dir /b /s "%~dp0java-runtime\*java.exe" 2^>nul') do (
+    if exist "%%j" (
+        set "JAVA_CMD=%%j"
+        echo [OK] Using local bundled Java runtime: %%j
+        goto JAVA_FOUND
     )
 )
 
-REM Fallback: Check local java-runtime directory
-if not defined JAVA_CMD (
-    for /f "delims=" %%j in ('dir /b /s "%~dp0java-runtime\*java.exe" 2^>nul') do (
-        if exist "%%j" (
-            set "JAVA_CMD=%%j"
-            echo [OK] Using local bundled Java runtime: %%j
-            goto JAVA_FOUND
-        )
-    )
-)
+:INSTALL_JAVA_PROMPT
+echo [WARN] Java 21 was not found on your system.
+where winget >nul 2>&1
+if errorlevel 1 goto MANUAL_JAVA_INSTALL
+
+echo [INFO] Installing OpenJDK 21 via Windows Package Manager winget...
+winget install EclipseAdoptium.Temurin.21.JDK --accept-package-agreements --accept-source-agreements
+echo [INFO] Re-checking Java installation...
+where java >nul 2>&1
+if errorlevel 1 goto RESTART_REQUIRED
+
+set "JAVA_CMD=java"
+echo [OK] Java 21 installed successfully.
+goto JAVA_FOUND
+
+:RESTART_REQUIRED
+echo [ACTION REQUIRED] Please restart your terminal/PC to complete Java installation.
+popd
+pause
+exit /b 1
+
+:MANUAL_JAVA_INSTALL
+echo [ERROR] Java 21 is required. Please download and install Eclipse Temurin 21 from:
+echo https://adoptium.net/temurin/releases/?version=21
+popd
+pause
+exit /b 1
 
 :JAVA_FOUND
-REM If Java is still missing, offer automatic installation via winget
-if not defined JAVA_CMD (
-    echo [WARN] Java 21 was not found on your system.
-    where winget >nul 2>&1
-    if not errorlevel 1 (
-        echo [INFO] Installing OpenJDK 21 via Windows Package Manager (winget)...
-        winget install EclipseAdoptium.Temurin.21.JDK --accept-package-agreements --accept-source-agreements
-        echo [INFO] Re-checking Java installation...
-        where java >nul 2>&1
-        if not errorlevel 1 (
-            set "JAVA_CMD=java"
-            echo [OK] Java 21 installed successfully.
-        ) else (
-            echo [ACTION REQUIRED] Please restart your terminal/PC to complete Java installation.
-            pause
-            exit /b 1
-        )
-    ) else (
-        echo [ERROR] Java 21 is required. Please download and install Eclipse Temurin 21 from:
-        echo https://adoptium.net/temurin/releases/?version=21
-        pause
-        exit /b 1
-    )
-)
-
 REM 2. Verify EULA acceptance
 if exist "%~dp0eula.txt" (
     findstr /i "eula=true" "%~dp0eula.txt" >nul 2>&1
@@ -101,7 +103,7 @@ if exist "%~dp0eula.txt" (
     echo [OK] Created eula.txt with eula=true
 )
 
-REM 3. Launch Playit.gg tunnel if requested or default
+REM 3. Launch Playit.gg tunnel if requested
 if "%OPT_TUNNEL%"=="1" (
     if exist "%~dp0playit.exe" (
         tasklist /FI "IMAGENAME eq playit.exe" 2>nul | find /I /N "playit.exe" >nul
@@ -122,7 +124,7 @@ echo [INFO] Memory and JVM flags: user_jvm_args.txt
 echo ==============================================================================
 echo.
 
-"!JAVA_CMD!" @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.264/win_args.txt nogui %*
+"%JAVA_CMD%" @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.264/win_args.txt nogui %*
 
 echo.
 echo [INFO] Minecraft server has stopped.
@@ -137,6 +139,7 @@ REM ============================================================================
 echo [INFO] Creating timestamped backup of world...
 if not exist "%~dp0world" (
     echo [ERROR] No world folder found to backup.
+    popd
     pause
     exit /b 1
 )
@@ -152,6 +155,7 @@ if exist "%BACKUP_FILE%" (
 ) else (
     echo [ERROR] Backup failed.
 )
+popd
 pause
 exit /b 0
 
