@@ -8,3 +8,4 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; t
 else
     exec java @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.264/unix_args.txt "$@"
 fi
+
