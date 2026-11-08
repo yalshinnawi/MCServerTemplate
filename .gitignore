@@ -1,82 +1,54 @@
 # ==============================================================================
-# Strict Git Hygiene: Configuration as Code for Minecraft Server Infrastructure
+# Create Aeronautics Server - Git Ignore Configuration
 # ==============================================================================
 
-# --- Environment and Secrets ---
-.env
-*.env.local
-*.env.*.local
+# Local Java Runtimes (lib/modules > 100MB exceeds GitHub push limit)
+java-runtime/
 
-# --- Container Server Runtime Data (inside ./data) ---
-data/world*
-data/logs/
-data/crash-reports/
-data/libraries/
-data/versions/
-data/cache/
-data/session.lock
-data/usercache.json
-data/usernamecache.json
-data/banned-ips.json
-data/banned-players.json
-data/ops.json
-data/whitelist.json
-data/dynamic-data-pack-cache/
-data/automessage_data/
-data/local/
-data/journeymap/
-data/.mixin.out/
-data/.sable/
-data/.previousrun/
-data/*.tmp
-data/*.OLD
-data/*.log
-data/*.log.gz
-data/*installer.jar.log
-
-# --- Local Host Runtime Data & Saves (outside Docker) ---
+# Minecraft World & Saved Chunks
 world/
 world_nether/
 world_the_end/
+
+# Server Logs & Crash Reports
 logs/
 crash-reports/
 debug/
-session.lock
+*.log
+*.log.gz
+
+# Mixin & Mod Runtime Caches
+.mixin.out/
+.sable/
+.previousrun
+dynamic-data-pack-cache/
+automessage_data/
+local/
+journeymap/
+*.tmp
+*.OLD
+*installer.jar.log
+
+# Player runtime state, bans, ops & locks (generated at runtime)
 usercache.json
 usernamecache.json
 banned-ips.json
 banned-players.json
 ops.json
 whitelist.json
-dynamic-data-pack-cache/
-automessage_data/
-local/
-journeymap/
-.mixin.out/
-.sable/
-.previousrun
-*.tmp
-*.log
-*.log.gz
-*.OLD
-*installer.jar.log
+session.lock
 
-# --- Backups and Archives ---
+# World Backups & Archives
 backups/
 *.tar.gz
 *.zip
 *.7z
 
-# --- Binary Jars & Executables ---
-*.jar
-java-runtime/
-playit.exe
-
-# --- Tunnel & Auth Secrets ---
+# Playit.gg secret credentials & claim tokens
 playit.toml
 *.token
 
-# --- OS & Editor Artifacts ---
+# OS & Editor Artifacts
 .DS_Store
 Thumbs.db
 ehthumbs.db
@@ -85,22 +57,3 @@ desktop.ini
 .idea/
 *.swp
 *~
-
-# ==============================================================================
-# Whitelist: Trackable Configurations & Declarations
-# ==============================================================================
-!compose.yaml
-!.env.example
-!.gitignore
-!config/
-!config/**
-!defaultconfigs/
-!defaultconfigs/**
-!kubejs/
-!kubejs/**
-!data/config/
-!data/config/**
-!data/defaultconfigs/
-!data/defaultconfigs/**
-!data/kubejs/
-!data/kubejs/**

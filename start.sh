@@ -1,255 +1,139 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Create Aeronautics Minecraft Server — Single Unified Script (Linux / macOS / WSL)
-# Usage:
-#   ./start.sh                (Checks deps, boots server in background, tails logs)
-#   ./start.sh -tunnel        (Boots server + Playit tunnel for internet play)
-#   ./start.sh stop           (Safely shuts down server)
-#   ./start.sh logs           (Stream live server logs)
-#   ./start.sh rcon [cmd]     (Open interactive console or run a Minecraft command)
-#   ./start.sh backup         (Zero-downtime world flush and compressed backup)
-#   ./start.sh setup          (Verify/install Docker and system packages)
+# Create Aeronautics Server - Unified Native Launcher (Linux / macOS / WSL / Git Bash)
 # ==============================================================================
-set -euo pipefail
+set -e
 
-CONTAINER_NAME="mc-create-server"
-DATA_DIR="./data"
-BACKUP_DIR="./backups"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-print_help() {
-  echo "=============================================================================="
-  echo " Create Aeronautics Server Management (Linux / macOS / WSL)"
-  echo "=============================================================================="
-  echo "Usage: ./start.sh [command] [options]"
-  echo ""
-  echo "Commands:"
-  echo "  (no args)       Check environment, start server, and stream console logs"
-  echo "  -tunnel         Start server AND Playit tunnel for WAN / internet play"
-  echo "  stop / down     Gracefully stop the server container"
-  echo "  restart         Restart server container"
-  echo "  logs            Follow real-time server console output"
-  echo "  rcon [cmd]      Open interactive RCON shell or run single command (e.g. ./start.sh rcon list)"
-  echo "  backup          Safely freeze saving, flush chunks, archive world to ./backups/"
-  echo "  setup / doctor  Verify/install dependencies (Docker, Docker Compose, curl, tar)"
-  echo "  help            Display this help message"
-  echo ""
+ACTION="${1:-}"
+OPT_TUNNEL=0
+
+if [ "$ACTION" = "help" ] || [ "$ACTION" = "-h" ] || [ "$ACTION" = "--help" ]; then
+    echo "=============================================================================="
+    echo " Create Aeronautics Skybound - Native Server Launcher"
+    echo "=============================================================================="
+    echo "Usage: ./start.sh [command] [options]"
+    echo ""
+    echo "Commands:"
+    echo "  (no arguments)     Start the Minecraft server directly"
+    echo "  -tunnel            Start the server AND launch Playit tunnel in background"
+    echo "  backup             Safely compress the world folder into ./backups/"
+    echo "  help               Show this help message"
+    echo ""
+    echo "Configuration files:"
+    echo "  user_jvm_args.txt  Set RAM allocation (-Xmx8G) and garbage collection flags"
+    echo "  server.properties  Server settings, difficulty, view distance, port"
+    echo "=============================================================================="
+    exit 0
+fi
+
+if [ "$ACTION" = "backup" ]; then
+    echo "[INFO] Creating timestamped backup of world directory..."
+    if [ ! -d "world" ]; then
+        echo "[ERROR] No world folder found to backup."
+        exit 1
+    fi
+    mkdir -p backups
+    TIMESTAMP="$(date +%Y-%m-%d_%H-%M)"
+    BACKUP_FILE="backups/world-${TIMESTAMP}.tar.gz"
+    tar -czf "$BACKUP_FILE" world
+    echo "[SUCCESS] Backup created at: $BACKUP_FILE"
+    exit 0
+fi
+
+if [ "$ACTION" = "-tunnel" ] || [ "$ACTION" = "--tunnel" ] || [ "${2:-}" = "-tunnel" ] || [ "${2:-}" = "--tunnel" ]; then
+    OPT_TUNNEL=1
+fi
+
+echo "=============================================================================="
+echo "      Create Aeronautics Skybound - Native Server Launcher"
+echo "=============================================================================="
+echo ""
+
+# 1. Java 21 Pre-flight Detection
+check_java() {
+    if command -v java >/dev/null 2>&1; then
+        RAW_VER=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
+        MAJOR_VER=$(echo "$RAW_VER" | awk -F '.' '{print $1}')
+        if [ "$MAJOR_VER" -ge 21 ] 2>/dev/null; then
+            echo "[OK] Detected Java $MAJOR_VER ($RAW_VER)"
+            return 0
+        fi
+    fi
+    return 1
 }
 
-check_prereqs() {
-  echo "=========================================================="
-  echo " Create Aeronautics Server Environment Pre-flight Checks"
-  echo "=========================================================="
-
-  # 1. Check Docker installed
-  if ! command -v docker >/dev/null 2>&1; then
-    echo "[WARN] Docker is not installed."
-    echo "[INFO] Running automated Docker installation..."
+if ! check_java; then
+    echo "[WARN] Java 21 or higher not found in PATH."
     OS="$(uname -s)"
     if [ "$OS" = "Linux" ]; then
-      curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-      sudo sh /tmp/get-docker.sh
-      rm -f /tmp/get-docker.sh
-      if [ -n "${USER:-}" ] && [ "$USER" != "root" ]; then
-        sudo usermod -aG docker "$USER" || true
-      fi
-      if command -v systemctl >/dev/null 2>&1; then
-        sudo systemctl enable --now docker || true
-      fi
+        if command -v apt-get >/dev/null 2>&1; then
+            echo "[INFO] Installing OpenJDK 21 via apt..."
+            sudo apt-get update && sudo apt-get install -y openjdk-21-jre-headless
+        elif command -v dnf >/dev/null 2>&1; then
+            echo "[INFO] Installing OpenJDK 21 via dnf..."
+            sudo dnf install -y java-21-openjdk-headless
+        elif command -v pacman >/dev/null 2>&1; then
+            echo "[INFO] Installing OpenJDK 21 via pacman..."
+            sudo pacman -S --noconfirm jre21-openjdk-headless
+        else
+            echo "[ERROR] Could not detect package manager. Please install Java 21 manually:"
+            echo "https://adoptium.net/temurin/releases/?version=21"
+            exit 1
+        fi
     elif [ "$OS" = "Darwin" ]; then
-      if command -v brew >/dev/null 2>&1; then
-        brew install --cask docker
-      else
-        echo "[ERROR] Please install Docker Desktop for Mac: https://www.docker.com/products/docker-desktop/"
-        exit 1
-      fi
+        if command -v brew >/dev/null 2>&1; then
+            echo "[INFO] Installing OpenJDK 21 via Homebrew..."
+            brew install openjdk@21
+            sudo ln -sfn /usr/local/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk || true
+        else
+            echo "[ERROR] Homebrew not found. Please install Java 21 from: https://adoptium.net/"
+            exit 1
+        fi
+    else
+        # Under Windows Git Bash / MSYS
+        echo "[INFO] Checking for local Windows java runtime..."
+        if [ -f "./java-runtime/jdk-21.0.13+9/bin/java.exe" ]; then
+            JAVA_CMD="./java-runtime/jdk-21.0.13+9/bin/java.exe"
+            echo "[OK] Found local Java runtime: $JAVA_CMD"
+        fi
     fi
-  fi
-
-  # 2. Check Docker daemon running
-  if ! docker info >/dev/null 2>&1; then
-    echo "[INFO] Docker daemon is not active. Attempting to start..."
-    if command -v systemctl >/dev/null 2>&1; then
-      sudo systemctl start docker || true
-    elif [ "$(uname -s)" = "Darwin" ]; then
-      open -a Docker || true
-    fi
-    sleep 3
-    if ! docker info >/dev/null 2>&1; then
-      echo "[ERROR] Could not connect to Docker daemon. Please verify Docker is running."
-      exit 1
-    fi
-  fi
-  echo "[OK] Docker daemon is healthy."
-
-  # 3. Check .env configuration
-  if [ ! -f ".env" ]; then
-    if [ -f ".env.example" ]; then
-      echo "[INFO] Creating .env from .env.example..."
-      cp .env.example .env
-    fi
-  fi
-
-  # 4. Ensure data & backup directories exist
-  mkdir -p "$DATA_DIR" "$BACKUP_DIR"
-
-  # 5. Seed ./data volume with template configs if mods directory is fresh
-  if [ ! -d "$DATA_DIR/mods" ] && [ -d "./mods" ]; then
-    echo "[INFO] Initializing ./data volume with server mods and configurations..."
-    mkdir -p "$DATA_DIR/mods" "$DATA_DIR/config" "$DATA_DIR/defaultconfigs" "$DATA_DIR/kubejs"
-    cp -rn ./mods/* "$DATA_DIR/mods/" 2>/dev/null || true
-    [ -d "./config" ] && cp -rn ./config/* "$DATA_DIR/config/" 2>/dev/null || true
-    [ -d "./defaultconfigs" ] && cp -rn ./defaultconfigs/* "$DATA_DIR/defaultconfigs/" 2>/dev/null || true
-    [ -d "./kubejs" ] && cp -rn ./kubejs/* "$DATA_DIR/kubejs/" 2>/dev/null || true
-    [ -f "./server.properties" ] && cp -n ./server.properties "$DATA_DIR/server.properties" 2>/dev/null || true
-    [ -f "./eula.txt" ] && cp -n ./eula.txt "$DATA_DIR/eula.txt" 2>/dev/null || true
-    echo "[OK] Data directory initialized."
-  fi
-}
-
-cmd_up() {
-  check_prereqs
-  TUNNEL=false
-  for arg in "$@"; do
-    if [ "$arg" = "-tunnel" ] || [ "$arg" = "--tunnel" ] || [ "$arg" = "-t" ]; then
-      TUNNEL=true
-    fi
-  done
-
-  echo ""
-  if [ "$TUNNEL" = true ]; then
-    echo "[INFO] Launching Minecraft server with Playit tunnel enabled..."
-    docker compose --profile tunnel up -d
-  else
-    echo "[INFO] Launching Minecraft server in background..."
-    docker compose up -d
-  fi
-
-  echo ""
-  echo "=============================================================================="
-  echo " [SUCCESS] Server is online!"
-  echo " - Local connection:   localhost:25565"
-  echo " - Interactive console: ./start.sh rcon"
-  echo " - Graceful shutdown:   ./start.sh stop"
-  echo " - Create safe backup:  ./start.sh backup"
-  echo "=============================================================================="
-  echo ""
-  echo "Attaching to live server logs (Press Ctrl+C to detach; server will keep running):"
-  echo "------------------------------------------------------------------------------"
-  docker compose logs -f --tail=100 minecraft
-}
-
-cmd_down() {
-  echo "[INFO] Gracefully stopping server and tunnel containers..."
-  docker compose --profile tunnel down
-  echo "[SUCCESS] All containers stopped cleanly."
-}
-
-cmd_restart() {
-  cmd_down
-  cmd_up "$@"
-}
-
-cmd_logs() {
-  echo "[INFO] Streaming logs for $CONTAINER_NAME (Press Ctrl+C to exit)..."
-  docker compose logs -f --tail=100 minecraft
-}
-
-cmd_rcon() {
-  if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "[ERROR] Container $CONTAINER_NAME is not running. Start it first with: ./start.sh"
-    exit 1
-  fi
-
-  if [ $# -gt 0 ]; then
-    docker exec -i "$CONTAINER_NAME" rcon-cli "$@"
-  else
-    echo "[INFO] Connecting to interactive RCON CLI..."
-    echo "[INFO] Type 'help' for Minecraft commands, Ctrl+C to exit."
-    echo ""
-    docker exec -it "$CONTAINER_NAME" rcon-cli
-  fi
-}
-
-cmd_backup() {
-  if [ ! -d "$DATA_DIR/world" ]; then
-    echo "[WARN] World folder '$DATA_DIR/world' not found. Start server first to generate world."
-    exit 1
-  fi
-
-  mkdir -p "$BACKUP_DIR"
-  TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-  BACKUP_FILE="${BACKUP_DIR}/world_backup_${TIMESTAMP}.tar.gz"
-
-  IS_RUNNING=false
-  if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    IS_RUNNING=true
-  fi
-
-  if [ "$IS_RUNNING" = true ]; then
-    echo "[INFO] Freezing world save operations via RCON..."
-    docker exec "$CONTAINER_NAME" rcon-cli save-off
-    echo "[INFO] Flushing chunk writes to disk..."
-    docker exec "$CONTAINER_NAME" rcon-cli save-all flush
-    sleep 2
-  else
-    echo "[INFO] Server container is stopped; archiving world directly..."
-  fi
-
-  echo "[INFO] Creating compressed backup archive: $BACKUP_FILE ..."
-  tar -czf "$BACKUP_FILE" -C "$DATA_DIR" world
-
-  if [ "$IS_RUNNING" = true ]; then
-    echo "[INFO] Re-enabling world auto-save via RCON..."
-    docker exec "$CONTAINER_NAME" rcon-cli save-on
-  fi
-
-  SIZE=$(du -h "$BACKUP_FILE" | awk '{print $1}')
-  echo "[SUCCESS] World backup completed!"
-  echo " - Destination: $BACKUP_FILE (Size: $SIZE)"
-}
-
-cmd_setup() {
-  check_prereqs
-  echo ""
-  echo "[SUCCESS] Host environment setup and verification complete."
-}
-
-# Command Router
-ACTION="${1:-up}"
-if [ "$ACTION" = "-tunnel" ] || [ "$ACTION" = "--tunnel" ]; then
-  ACTION="up"
-  set -- "up" "$@"
 fi
-shift || true
 
-case "$ACTION" in
-  up|start)
-    cmd_up "$@"
-    ;;
-  down|stop)
-    cmd_down
-    ;;
-  restart)
-    cmd_restart "$@"
-    ;;
-  logs)
-    cmd_logs
-    ;;
-  rcon|console)
-    cmd_rcon "$@"
-    ;;
-  backup)
-    cmd_backup
-    ;;
-  setup|doctor)
-    cmd_setup
-    ;;
-  help|-h|--help)
-    print_help
-    ;;
-  *)
-    echo "[ERROR] Unknown command '$ACTION'"
-    print_help
-    exit 1
-    ;;
-esac
+# 2. EULA acceptance
+if [ -f "eula.txt" ]; then
+    if ! grep -q "eula=true" eula.txt; then
+        echo "eula=true" > eula.txt
+        echo "[OK] Minecraft EULA accepted in eula.txt"
+    fi
+else
+    echo "eula=true" > eula.txt
+    echo "[OK] Created eula.txt with eula=true"
+fi
+
+# 3. Tunnel handling
+if [ "$OPT_TUNNEL" -eq 1 ]; then
+    if [ -f "./playit.exe" ]; then
+        echo "[INFO] Starting Playit tunnel in background..."
+        ./playit.exe &
+    elif command -v playit >/dev/null 2>&1; then
+        echo "[INFO] Starting Playit tunnel in background..."
+        playit start &
+    else
+        echo "[WARN] playit executable not found. Skipping tunnel."
+    fi
+fi
+
+# 4. Boot NeoForge Server
+echo "[INFO] Booting NeoForge Minecraft Server..."
+echo "[INFO] Memory and JVM flags: user_jvm_args.txt"
+echo "=============================================================================="
+echo ""
+
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; then
+    ${JAVA_CMD:-java} @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.264/win_args.txt nogui "$@"
+else
+    java @user_jvm_args.txt @libraries/net/neoforged/neoforge/21.1.264/unix_args.txt nogui "$@"
+fi

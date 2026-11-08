@@ -1,124 +1,114 @@
-# ✈️ Create Aeronautics Skybound — Production Containerized Server
+# ✈️ Create Aeronautics Skybound — Server Template
 
-A high-performance, containerized Minecraft server infrastructure specifically architected for large modpacks (featuring **Create Aeronautics**, complex kinetics, and physics simulations) running on constrained laptop hardware (**Intel Core i7-6600U dual-core CPU, 16 GB system RAM, Windows 10/11 with Docker WSL2**).
+A high-performance Minecraft 1.21.1 NeoForge server template specifically configured for large modpacks (**Create Aeronautics Skybound**, 380+ mods, physics simulations, airships, and trains).
+
+Runs **natively on bare-metal Java** with zero virtualization overhead for maximum TPS (ticks-per-second) and RAM efficiency.
 
 ---
 
-## 🚀 One-Click Start (The Only Script You Need)
-
-Everything—from dependency verification and `.wslconfig` tuning to launching the server, tailing logs, and managing backups—is handled by **one single script**:
+## 🚀 Quick Start (One Command)
 
 ### On Windows:
-Just **double-click** `start.bat` in Windows File Explorer, or run in PowerShell / CMD:
+Double-click **`start.bat`** (or run in CMD / PowerShell / Git Bash):
 ```cmd
 start.bat
 ```
 
-### On Linux / macOS / WSL2:
-Run in your terminal:
+### On Linux / macOS / WSL:
+Make executable and run:
 ```bash
+chmod +x start.sh run.sh
 ./start.sh
 ```
 
 > [!TIP]
-> **What running the script does automatically:**
-> 1. Verifies that Docker is installed (and offers to install it via `winget` / package manager if missing).
-> 2. Starts the Docker engine if stopped.
-> 3. Configures `.wslconfig` (memory capped at 12 GB, 4 CPU, 4 GB swap) to protect your 16 GB laptop from pagefile thrashing.
-> 4. Prepares `.env` and seeds `./data` volume with mod configurations.
-> 5. Launches the server in Docker and attaches directly to live console logs!
+> **What the startup script does automatically:**
+> 1. Detects your installed Java runtime and verifies Java 21+ compatibility (or offers automated installation if missing).
+> 2. Automatically accepts `eula.txt`.
+> 3. Reads performance-tuned Generational ZGC flags from `user_jvm_args.txt`.
+> 4. Boots the NeoForge server directly on bare-metal hardware.
 
 ---
 
-## 🛠️ Single-Script Command Reference
+## 🛠️ CLI Commands & Flags
 
-You can pass simple arguments to `start.bat` (Windows) or `./start.sh` (Linux/macOS) for every server operation:
-
-| Operation | Windows Command | Linux / macOS / WSL Command | Description |
-| :--- | :--- | :--- | :--- |
-| **Start & Stream Logs** | `start.bat` | `./start.sh` | Default action: checks deps, boots server, tails logs. |
-| **Start + WAN Tunnel** | `start.bat -tunnel` | `./start.sh -tunnel` | Starts server + containerized Playit.gg tunnel. |
-| **Stop Server** | `start.bat stop` | `./start.sh stop` | Gracefully shuts down all containers (`stop_grace_period: 60s`). |
-| **Restart Server** | `start.bat restart` | `./start.sh restart` | Restarts all containers cleanly. |
-| **View Live Logs** | `start.bat logs` | `./start.sh logs` | Tails server console output (`Ctrl+C` to detach). |
-| **Interactive Console** | `start.bat rcon` | `./start.sh rcon` | Connects directly to in-game server RCON console. |
-| **Run Console Command**| `start.bat rcon list` | `./start.sh rcon list` | Executes a single command and returns. |
-| **Zero-Downtime Backup**| `start.bat backup` | `./start.sh backup` | Freezes writes, flushes chunks, creates compressed `.tar.gz`. |
-| **Dependency Doctor** | `start.bat setup` | `./start.sh setup` | Manually checks/tunes Docker, WSL2, and `.wslconfig`. |
+| Command (Windows) | Command (Linux / macOS) | Description |
+| :--- | :--- | :--- |
+| `start.bat` | `./start.sh` | Normal start: verifies Java, boots server directly. |
+| `start.bat -tunnel` | `./start.sh -tunnel` | Starts server **AND** launches the Playit.gg WAN tunnel for friends to join. |
+| `start.bat backup` | `./start.sh backup` | Safely creates a timestamped archive of the `world/` folder into `./backups/`. |
+| `start.bat help` | `./start.sh help` | Displays the help menu with configuration tips. |
+| `run.bat` | `./run.sh` | Direct raw NeoForge runner (no pre-checks). |
 
 ---
 
-## 🔒 Automated Safe Backups (`start.bat backup`)
+## 🌐 Connecting Friends & Network Setup
 
-When you run `start.bat backup` (or `./start.sh backup`), the script:
-1. Temporarily freezes chunk autosaving via RCON: `rcon-cli save-off`.
-2. Flushes pending chunk and entity modifications to disk: `rcon-cli save-all flush`.
-3. Pauses 2 seconds for complete I/O quiescence.
-4. Creates a compressed, timestamped archive in `./backups/world_backup_<timestamp>.tar.gz`.
-5. Safely re-enables autosave: `rcon-cli save-on`.
+### 1. External Friends (Across the Internet)
+Start the server with the tunnel flag:
+```cmd
+start.bat -tunnel
+```
+Friends connect using your Playit domain and port:
+```text
+chords-infected.tun.ply.gg:1779
+```
 
----
-
-## ⚡ Host OS & WSL2 Tuning (Crucial for 16 GB Dual-Core Laptop)
-
-1. **Power Plan**: Open Windows Control Panel -> **Power Options** -> select **High Performance** (or **Ultimate Performance**). Ensure the laptop is plugged into **AC power**.
-2. **Lid Close Action**: Set **When I close the lid (Plugged in)** to **Do nothing** so Windows won't suspend the Docker VM.
-3. **WSL2 Memory Cap (`.wslconfig`)**: Automatically managed by `start.bat`. If configuring manually, ensure `C:\Users\<User>\.wslconfig` contains:
-   ```ini
-   [wsl2]
-   memory=12GB
-   processors=4
-   swap=4GB
-   localhostForwarding=true
-   ```
+### 2. Same Local Wi-Fi (LAN)
+If players are on the same local Wi-Fi, they connect using your host PC's local IP:
+```text
+192.168.4.76:25565
+```
+*(Make sure your Windows Network Profile is set to **Private** and Windows Firewall allows inbound TCP port `25565`)*.
 
 ---
 
-## 🗺️ Chunk Pre-Generation with Chunky (Mandatory Bootstrap)
+## ⚙️ Memory & Performance Tuning
 
-In large Create modpacks with high-speed airships and trains, dynamic chunk generation while players fly causes extreme CPU load and server stalls on dual-core processors.
+### RAM Allocation (`user_jvm_args.txt`)
+Open [`user_jvm_args.txt`](file:///user_jvm_args.txt) to adjust RAM according to your hosting PC:
+```text
+-Xms4G
+-Xmx8G
+```
+- **8 GB System RAM:** Use `-Xms3G -Xmx5G`
+- **16 GB System RAM (Default):** Use `-Xms4G -Xmx8G`
+- **32 GB+ System RAM:** Use `-Xms6G -Xmx12G`
 
-**Pre-generate all chunks before opening the server to players:**
+### Generational ZGC
+Java 21 Generational ZGC is pre-configured in `user_jvm_args.txt` (`-XX:+UseZGC -XX:+ZGenerational`). This virtually eliminates the 1-2 second garbage-collection freeze spikes common with 300+ modpacks.
 
-1. Connect to the server console:
-   ```cmd
-   start.bat rcon
-   ```
-2. Execute the exact command sequence:
+---
+
+## 🗺️ Recommended: Chunk Pre-Generation with Chunky
+
+In heavy Create modpacks with high-speed airships and trains, dynamic chunk generation while players fly causes extreme CPU load and server stalls on dual-core processors.
+
+**Pre-generate your world before opening the server to players:**
+
+1. In the server console, run:
    ```text
-   /worldborder set 6000
-   /chunky radius 3000
-   /chunky start
+   worldborder set 6000
+   chunky radius 3000
+   chunky start
    ```
-3. Monitor progress:
+2. Monitor progress:
    ```text
-   /chunky progress
+   chunky progress
    ```
-4. Once pre-generation reaches 100%, players can explore freely with minimal chunk-generation tick lag!
+3. Once Chunky reaches 100%, players can explore smoothly with minimal chunk-generation tick lag!
 
 ---
 
-## 🧩 Essential Server-Side Optimization Mods
+## 💻 Laptop Hosting Best Practices
 
-To ensure smooth 20 TPS tick rates with Create Aeronautics on a dual-core host, verify that these server-side optimization mods are present in `./data/mods`:
-
-| Mod Name | Function & Purpose |
-| :--- | :--- |
-| **ModernFix** | Drastically reduces RAM usage, eliminates memory leaks, optimizes dynamic registries, and accelerates world loading. |
-| **FerriteCore** | Optimizes Minecraft memory usage by reducing memory footprint of blockstates, models, and neighbor tables. |
-| **Canary / Radium** | Unofficial Forge/NeoForge port of Lithium. Highly optimizes general chunk, block entity, AI, and collision ticking physics. |
-| **FastSuite** | Optimizes recipe lookups and crafting data structures, eliminating TPS drops when modded machines search for recipes. |
-| **Krypton** | Optimizes Minecraft networking stack, Netty channel pipelines, and packet compression/batching for high latency links. |
+If hosting from a Windows laptop:
+1. **Power Plan**: Go to Windows Control Panel -> **Power Options** -> choose **High Performance** (or **Ultimate Performance**). Always keep the laptop plugged into **AC power**.
+2. **Lid Close Action**: Set **When I close the lid (Plugged in)** to **Do nothing** so Windows won't put the server to sleep.
 
 ---
 
-## ⚙️ Architecture & JVM Tuning Highlights
+## 📖 In-Depth Guides
 
-- **Generational ZGC (`-XX:+UseZGC -XX:+ZGenerational`)**:
-  Separates objects into young and old generations concurrently. Pauses are guaranteed sub-millisecond, preventing the periodic 3–8 second GC freezes common with standard G1GC on 9 GB+ modded heaps.
-- **`MAX_TICK_TIME="-1"`**:
-  Disables the Minecraft watchdog shutdown timer. Dual-core CPUs running Create physics calculations occasionally take >60 seconds during intensive contraption assemblies; setting `-1` prevents accidental server crashes.
-- **`VIEW_DISTANCE="6"` & `SIMULATION_DISTANCE="4"`**:
-  Balances immersive visibility with minimal tick overhead, keeping active ticking blocks tightly bounded.
-- **`SYNC_CHUNK_WRITES="false"`**:
-  Enables asynchronous chunk writing, removing disk I/O wait cycles from the main server tick thread.
+- [**Hosting & Configuration Guide**](file:///docs/HOSTING_GUIDE.md): Detailed walkthrough for migrating to a new PC, changing server properties, adding/removing mods, and console commands.
+- [**Troubleshooting & Diagnostics**](file:///docs/TROUBLESHOOTING.md): Solutions for Connection Reset, getsockopt timeouts, carrier DNS issues, and `spark` TPS profiling.

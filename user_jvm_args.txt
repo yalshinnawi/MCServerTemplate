@@ -1,9 +1,20 @@
-# Xmx and Xms set the maximum and minimum RAM usage, respectively.
-# They can take any number, followed by an M or a G.
-# M means Megabyte, G means Gigabyte.
-# For example, to set the maximum to 3GB: -Xmx3G
-# To set the minimum to 2.5GB: -Xms2500M
-# A good default for a modded server is 4GB.
-# Uncomment the next line to set it.
-# -Xmx4G
--Xmx6G -Xms4G
+# ==============================================================================
+# NeoForge JVM Memory & Performance Configuration
+# ==============================================================================
+# Adjust RAM allocation based on your host system:
+#   - 8GB RAM PC:   -Xms4G -Xmx6G
+#   - 16GB RAM PC:  -Xms4G -Xmx8G (Recommended default)
+#   - 32GB+ RAM PC: -Xms6G -Xmx12G
+# ==============================================================================
+-Xms4G
+-Xmx8G
+
+# ==============================================================================
+# Java 21 Generational ZGC (Ultra-Low Latency Garbage Collection)
+# Eliminates GC pauses and tick stutters for large 300+ modpacks
+# ==============================================================================
+-XX:+UseZGC
+-XX:+ZGenerational
+-XX:+AlwaysPreTouch
+-XX:+UnlockExperimentalVMOptions
+-XX:+DisableExplicitGC
