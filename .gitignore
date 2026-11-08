@@ -1,47 +1,106 @@
-# Java Runtime (Local OpenJDK installation; contains files > 100MB blocked by GitHub)
-java-runtime/
+# ==============================================================================
+# Strict Git Hygiene: Configuration as Code for Minecraft Server Infrastructure
+# ==============================================================================
 
-# Minecraft World & Saves (Omit local world saves for a clean server template)
+# --- Environment and Secrets ---
+.env
+*.env.local
+*.env.*.local
+
+# --- Container Server Runtime Data (inside ./data) ---
+data/world*
+data/logs/
+data/crash-reports/
+data/libraries/
+data/versions/
+data/cache/
+data/session.lock
+data/usercache.json
+data/usernamecache.json
+data/banned-ips.json
+data/banned-players.json
+data/ops.json
+data/whitelist.json
+data/dynamic-data-pack-cache/
+data/automessage_data/
+data/local/
+data/journeymap/
+data/.mixin.out/
+data/.sable/
+data/.previousrun/
+data/*.tmp
+data/*.OLD
+data/*.log
+data/*.log.gz
+data/*installer.jar.log
+
+# --- Local Host Runtime Data & Saves (outside Docker) ---
 world/
-
-# Runtime Logs & Crash Reports
+world_nether/
+world_the_end/
 logs/
 crash-reports/
 debug/
-*.log
-*.log.gz
-
-# Mixin & Mod runtime caches
-.mixin.out/
-.sable/
-.previousrun
-dynamic-data-pack-cache/
-automessage_data/
-local/
-journeymap/
-*.tmp
-
-# Server player cache & permissions (Auto-generated at runtime)
+session.lock
 usercache.json
 usernamecache.json
 banned-ips.json
 banned-players.json
 ops.json
 whitelist.json
-session.lock
-
-# Playit.gg secrets & tokens
-playit.toml
-*.token
-
-# Old backups & installer logs
+dynamic-data-pack-cache/
+automessage_data/
+local/
+journeymap/
+.mixin.out/
+.sable/
+.previousrun
+*.tmp
+*.log
+*.log.gz
 *.OLD
 *installer.jar.log
 
-# IDE & System Files
-.vscode/
-.idea/
+# --- Backups and Archives ---
+backups/
+*.tar.gz
+*.zip
+*.7z
+
+# --- Binary Jars & Executables ---
+*.jar
+java-runtime/
+playit.exe
+
+# --- Tunnel & Auth Secrets ---
+playit.toml
+*.token
+
+# --- OS & Editor Artifacts ---
 .DS_Store
 Thumbs.db
+ehthumbs.db
 desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
 
+# ==============================================================================
+# Whitelist: Trackable Configurations & Declarations
+# ==============================================================================
+!compose.yaml
+!.env.example
+!.gitignore
+!config/
+!config/**
+!defaultconfigs/
+!defaultconfigs/**
+!kubejs/
+!kubejs/**
+!data/config/
+!data/config/**
+!data/defaultconfigs/
+!data/defaultconfigs/**
+!data/kubejs/
+!data/kubejs/**
