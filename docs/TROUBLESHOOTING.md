@@ -7,20 +7,17 @@ A troubleshooting reference for errors, network failures, and performance issues
 ## 🛠️ Quick Diagnostics Checklist
 Before debugging, check:
 1. Is the server finished loading? Look for: `Done (xx.xxxs)! For help, type "help"` in the console.
-2. Is `playit.exe` running in its own window?
-3. Did the player include the port (e.g. `:1779`) when connecting via Playit?
+2. Is your domain (e.g. `<your-domain>.duckdns.org`) pointing to TCPShield (`50.114.4.72`)?
+3. Is your home public IP correctly set in TCPShield Backends?
 4. Are both client and server running the exact same NeoForge 1.21.1 modpack?
 
 ---
 
 ## 🔴 Network & Connection Errors
 
-### 1. `Internal Exception: java.net.SocketException: Connection reset`
-* **Cause:** The player typed the raw IP address (`147.185.x.x:port`) instead of the domain name. Playit’s shared proxy enforces a `NoRawIp` security policy and forcibly drops the connection.
-* **Fix:** Connect using the assigned domain name and port:
-  ```text
-  chords-infected.tun.ply.gg:1779
-  ```
+### 1. `Connection refused` or `Can't connect to server`
+* **Cause:** Your Minecraft server is stopped, or TCPShield backend IP is pointing to the wrong IP/port.
+* **Fix:** Make sure `start.bat` is running, and verify your public IP in TCPShield Backends matches your current IP (`<your-public-ip>:25565`).
 
 ---
 
@@ -36,11 +33,11 @@ Before debugging, check:
 ---
 
 ### 3. "Connecting to the server..." for ~1 minute followed by `Timed out`
-* **Scenario A: Connecting to Playit from inside the same home Wi-Fi.**
+* **Scenario A: Connecting to the public domain from inside the same home Wi-Fi.**
   * **Cause:** Most home routers do not support **NAT Loopback (Hairpinning)**. Traffic leaving your router and attempting to loop back to your own server gets dropped.
   * **Fix:** 
     * If on the host PC: Connect to `localhost`.
-    * If on another PC on the same Wi-Fi: Connect to the host's local IP (e.g., `192.168.4.76`).
+    * If on another PC on the same Wi-Fi: Connect to the host's local IP (e.g., `192.168.x.x`).
 * **Scenario B: Connecting from a Mobile Hotspot (Cellular).**
   * **Cause:** Cellular carriers (T-Mobile, AT&T, Verizon) often use restrictive cellular DNS or filter custom ports over IPv6.
   * **Fix:**

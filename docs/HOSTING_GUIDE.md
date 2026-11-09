@@ -76,44 +76,19 @@ To change how much RAM the server can use:
    * `-Xms`: Initial RAM allocation (e.g., `-Xms4G` for 4 Gigabytes).
 3. Save the file and restart the server.
 
-> [!TIP]
-> Also update `JAVA_ARGS="-Xmx6G -Xms4G"` in `variables.txt` so both files remain synchronized.
-
----
-
-## 4. How to Connect & Have Friends Join
-
-Depending on where a player is connecting from, use the appropriate method:
-
-### A. The Host Player (Playing on the Same Computer)
-* **Address:** `localhost` or `127.0.0.1`
-* *Do not connect via Playit from the host machine to avoid NAT loopback latency.*
-
-### B. Players on the Same Local Wi-Fi / LAN
-* **Address:** `192.168.x.x` (The host machine's local IPv4 address).
-* **Setup Required on Host:**
-  1. Set Wi-Fi network profile to **Private** (*Windows Settings → Network & Internet → Wi-Fi → Private network*).
-  2. Ensure Windows Firewall allows port `25565`:
-     ```powershell
-     netsh advfirewall firewall add rule name="Minecraft 25565" dir=in action=allow protocol=TCP localport=25565
-     ```
-
-### C. Friends Over the Internet via Playit.gg (Recommended)
-No router port forwarding required.
-1. Run `start.bat` (it automatically launches `playit.exe`).
-2. Give friends your Playit tunnel domain **with the assigned port**:
+### C. Friends Over the Internet via TCPShield (DDoS Protected & IP Masked)
+1. Run `start.bat`.
+2. Give friends your protected domain:
    ```text
-   chords-infected.tun.ply.gg:1779
+   <your-domain>.duckdns.org
    ```
-   *(Replace with your actual domain and port from `playit.exe tunnels list` or the [Playit Dashboard](https://playit.gg)).*
+   *(All traffic routes through TCPShield's Anycast network, protecting your home IP).*
 
-> [!IMPORTANT]
-> Friends must use the **domain name** and **not the raw IP** (`147.185.x.x`), as Playit rejects raw IP handshakes for security.
-
-### D. Alternative: Traditional Router Port Forwarding
-If you prefer not to use Playit:
-1. In your home router settings, forward external TCP port `25565` to the host PC's internal IP (`192.168.x.x:25565`).
-2. Friends connect using your public IP address: `<your-public-ip>:25565`.
+### D. Direct Port Forwarding (Alternative)
+Friends connect directly using your public IP:
+```text
+<your-public-ip>:25565
+```
 
 ---
 

@@ -8,7 +8,6 @@ REM Create Aeronautics Server - Unified Native Launcher (Windows)
 REM ==============================================================================
 
 set "ACTION=%~1"
-set "OPT_TUNNEL=1"
 
 REM Command line parsing
 if "%ACTION%"=="" goto START_SERVER
@@ -16,12 +15,6 @@ if /i "%ACTION%"=="help" goto PRINT_HELP
 if /i "%ACTION%"=="-h" goto PRINT_HELP
 if /i "%ACTION%"=="--help" goto PRINT_HELP
 if /i "%ACTION%"=="backup" goto CMD_BACKUP
-if /i "%ACTION%"=="-local" set "OPT_TUNNEL=0"
-if /i "%ACTION%"=="--no-tunnel" set "OPT_TUNNEL=0"
-if /i "%ACTION%"=="-notunnel" set "OPT_TUNNEL=0"
-if /i "%~2"=="-local" set "OPT_TUNNEL=0"
-if /i "%~2"=="--no-tunnel" set "OPT_TUNNEL=0"
-if /i "%~2"=="-notunnel" set "OPT_TUNNEL=0"
 goto START_SERVER
 
 :START_SERVER
@@ -100,22 +93,7 @@ if exist "%~dp0eula.txt" (
     echo [OK] Created eula.txt with eula=true
 )
 
-REM 3. Launch Playit.gg tunnel if requested
-if "%OPT_TUNNEL%"=="1" (
-    if exist "%~dp0playit.exe" (
-        tasklist /FI "IMAGENAME eq playit.exe" 2>nul | find /I /N "playit.exe" >nul
-        if errorlevel 1 (
-            echo [INFO] Starting Playit.gg WAN tunnel in background...
-            start "Playit Tunnel" /min "%~dp0playit.exe"
-        ) else (
-            echo [OK] Playit.gg WAN tunnel is already running.
-        )
-    ) else (
-        echo [WARN] playit.exe not found in server directory.
-    )
-)
-
-REM 4. Launch NeoForge Server
+REM 3. Launch NeoForge Server
 echo [INFO] Booting NeoForge Minecraft Server...
 echo [INFO] Memory and JVM flags: user_jvm_args.txt
 echo ==============================================================================
@@ -166,8 +144,7 @@ echo ===========================================================================
 echo Usage: start.bat [command] [options]
 echo.
 echo Commands:
-echo   (no arguments)     Start the Minecraft server + Playit.gg tunnel for friends (Default)
-echo   -local             Start server in local LAN mode (no tunnel)
+echo   (no arguments)     Start the Minecraft server (Default)
 echo   backup             Safely compress the world folder into ./backups/
 echo   help               Show this help message
 echo.

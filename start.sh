@@ -8,11 +8,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 ACTION="${1:-}"
-OPT_TUNNEL=1
-
-if [ "$ACTION" = "-local" ] || [ "$ACTION" = "--no-tunnel" ] || [ "$ACTION" = "-notunnel" ] || [ "${2:-}" = "-local" ] || [ "${2:-}" = "--no-tunnel" ]; then
-    OPT_TUNNEL=0
-fi
 
 if [ "$ACTION" = "help" ] || [ "$ACTION" = "-h" ] || [ "$ACTION" = "--help" ]; then
     echo "=============================================================================="
@@ -21,8 +16,7 @@ if [ "$ACTION" = "help" ] || [ "$ACTION" = "-h" ] || [ "$ACTION" = "--help" ]; t
     echo "Usage: ./start.sh [command] [options]"
     echo ""
     echo "Commands:"
-    echo "  (no arguments)     Start the Minecraft server + Playit tunnel for friends (Default)"
-    echo "  -local             Start server in local LAN mode (no tunnel)"
+    echo "  (no arguments)     Start the Minecraft server (Default)"
     echo "  backup             Safely compress the world folder into ./backups/"
     echo "  help               Show this help message"
     echo ""
@@ -114,20 +108,7 @@ else
     echo "[OK] Created eula.txt with eula=true"
 fi
 
-# 3. Tunnel handling
-if [ "$OPT_TUNNEL" -eq 1 ]; then
-    if [ -f "./playit.exe" ]; then
-        echo "[INFO] Starting Playit tunnel in background..."
-        ./playit.exe &
-    elif command -v playit >/dev/null 2>&1; then
-        echo "[INFO] Starting Playit tunnel in background..."
-        playit start &
-    else
-        echo "[WARN] playit executable not found. Skipping tunnel."
-    fi
-fi
-
-# 4. Boot NeoForge Server
+# 3. Boot NeoForge Server
 echo "[INFO] Booting NeoForge Minecraft Server..."
 echo "[INFO] Memory and JVM flags: user_jvm_args.txt"
 echo "=============================================================================="

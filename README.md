@@ -34,8 +34,7 @@ chmod +x start.sh
 
 | Command (Windows) | Command (Linux / macOS) | Description |
 | :--- | :--- | :--- |
-| `start.bat` | `./start.sh` | **Default**: Starts server + Playit.gg WAN tunnel for friends. |
-| `start.bat -local` | `./start.sh -local` | Starts server in local-only LAN mode (without Playit tunnel). |
+| `start.bat` | `./start.sh` | **Default**: Starts the NeoForge Minecraft server. |
 | `start.bat backup` | `./start.sh backup` | Safely creates a timestamped archive of the `world/` folder into `./backups/`. |
 | `start.bat help` | `./start.sh help` | Displays the help menu with configuration tips. |
 
@@ -48,15 +47,16 @@ Just start the server:
 ```cmd
 start.bat
 ```
-The Playit tunnel launches automatically in the background. Friends connect using your domain and port:
+Friends connect using your protected domain:
 ```text
-chords-infected.tun.ply.gg:1779
+<your-domain>.duckdns.org
 ```
+*(Traffic routes through TCPShield for DDoS protection and IP masking).*
 
 ### 2. Same Local Wi-Fi (LAN)
 If players are on the same local Wi-Fi, they connect using your host PC's local IP:
 ```text
-192.168.4.76:25565
+192.168.x.x:25565
 ```
 *(Make sure your Windows Network Profile is set to **Private** and Windows Firewall allows inbound TCP port `25565`)*.
 
